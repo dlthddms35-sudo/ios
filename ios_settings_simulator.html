@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>iOS 설정 시뮬레이터</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* iOS 시스템 폰트 및 다크모드 전용 세밀 스타일링 */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Apple SD Gothic Neo", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      background-color: #000000;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    /* iOS 스크롤바 숨기기 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* iOS 네이티브 애니메이션 큐빅 베지어 */
+    .ios-transition {
+      transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.38s ease;
+      will-change: transform, opacity;
+    }
+
+    /* iOS 토글 스위치 */
+    .ios-switch {
+      position: relative;
+      width: 51px;
+      height: 31px;
+      appearance: none;
+      background-color: #39393d;
+      outline: none;
+      border-radius: 31px;
+      cursor: pointer;
+      transition: background-color 0.25s;
+    }
+    .ios-switch:checked {
+      background-color: #34c759;
+    }
+    .ios-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 27px;
+      height: 27px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.7, 1);
+    }
+    .ios-switch:checked::after {
+      transform: translateX(20px);
+    }
+
+    /* 티 안 나는 인라인 편집 텍스트 필드 */
+    .editable-text {
+      outline: none;
+      display: inline-block;
+      cursor: text;
+      border-radius: 4px;
+      transition: background-color 0.15s;
+    }
+    .editable-text:focus {
+      background-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+    }
+    .editable-text:empty:before {
+      content: attr(placeholder);
+      color: #8e8e93;
+    }
+
+    /* 탭 터치 피드백 */
+    .cell-active:active {
+      background-color: #2c2c2e !important;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-neutral-900 p-0 sm:p-4">
+
+  <!-- 아이폰 목업 프레임 -->
+  <div class="relative w-full max-w-[412px] h-[100dvh] sm:h-[870px] bg-black sm:rounded-[52px] sm:ring-[12px] sm:ring-[#232326] shadow-2xl overflow-hidden flex flex-col">
+    
+    <!-- 최상단 상태바 (Status Bar) -->
+    <div class="relative z-50 flex items-center justify-between px-7 pt-3.5 pb-2 text-white shrink-0 select-none pointer-events-none">
+      <div id="status-clock" class="text-[15px] font-semibold tracking-tight">08:01</div>
+      <!-- 다이내믹 아일랜드 영역 (옵션 장식) -->
+      <div class="hidden sm:block absolute left-1/2 -translate-x-1/2 top-2.5 w-[112px] h-[30px] bg-black rounded-full z-50 pointer-events-none"></div>
+      <div class="flex items-center space-x-1.5 text-[12px]">
+        <i class="fa-solid fa-signal text-[11px]"></i>
+        <i class="fa-solid fa-wifi text-[12px]"></i>
+        <div class="flex items-center bg-[#fcd34d] text-black px-1.5 py-[1px] rounded-full text-[10px] font-black leading-none ml-1">
+          100
+        </div>
+      </div>
+    </div>
+
+    <!-- 스크린 래퍼 (네비게이션 스택) -->
+    <div class="relative flex-1 w-full overflow-hidden">
+
+      <!-- ============================================== -->
+      <!-- SCREEN 1: 설정 메인 화면 (Settings Main)      -->
+      <!-- ============================================== -->
+      <div id="screen-main" class="ios-transition absolute inset-0 flex flex-col bg-black overflow-y-auto no-scrollbar pb-16 z-10 translate-x-0">
+        
+        <!-- 대형 타이틀 -->
+        <div class="px-5 pt-2 pb-3">
+          <h1 class="text-[34px] font-bold text-white tracking-tight">설정</h1>
+        </div>
+
+        <!-- 계정 / 프로필 그룹 -->
+        <div class="mx-4 mb-5 bg-[#1c1c1e] rounded-[14px] overflow-hidden">
+          <!-- 프로필 행 -->
+          <div class="flex items-center p-3.5 border-b border-[#2c2c2e]/70 cell-active transition-colors">
+            <!-- 앨범 커버 스타일 프로필 이미지 -->
+            <div class="w-[60px] h-[60px] rounded-full overflow-hidden shrink-0 border border-white/10 mr-3.5 flex items-center justify-center bg-black relative shadow-md">
+              <div class="w-full h-full rounded-full bg-gradient-to-tr from-stone-900 via-neutral-800 to-stone-700 flex items-center justify-center">
+                <!-- LP 레코드 질감 그래픽 -->
+                <div class="w-10 h-10 rounded-full border border-red-900/60 bg-red-700/80 flex items-center justify-center shadow-inner">
+                  <div class="w-2.5 h-2.5 rounded-full bg-black"></div>
+                </div>
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <!-- 티 안 나게 수정 가능한 이름 필드 -->
+              <div 
+                id="profile-name" 
+                class="editable-text text-[20px] font-semibold text-white tracking-tight truncate leading-tight focus:px-1" 
+                contenteditable="true" 
+                spellcheck="false"
+                title="클릭하여 즉시 이름 변경"
+              >이송은</div>
+              <p class="text-[13px] text-[#8e8e93] mt-0.5 tracking-tight truncate">Apple 계정, iCloud+ 등</p>
+            </div>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs ml-2"></i>
+          </div>
+
+          <!-- 가족 행 -->
+          <div class="flex items-center px-4 py-3.5 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="flex -space-x-2 mr-3 shrink-0">
+              <div class="w-7 h-7 rounded-full bg-amber-600 border border-[#1c1c1e] flex items-center justify-center text-[11px] font-bold">윤</div>
+              <div class="w-7 h-7 rounded-full bg-indigo-500 border border-[#1c1c1e] flex items-center justify-center text-[11px] font-bold">서</div>
+              <div class="w-7 h-7 rounded-full bg-neutral-600 border border-[#1c1c1e] flex items-center justify-center text-[10px]">🤍</div>
+            </div>
+            <span class="text-[17px] text-white flex-1">가족</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+
+          <!-- Apple 계정 제안 -->
+          <div class="flex items-center px-4 py-3.5 cell-active">
+            <span class="text-[17px] text-white flex-1">Apple 계정 제안</span>
+            <span class="bg-[#ff3b30] text-white text-[12px] font-semibold px-2 py-[2px] rounded-full mr-2">2</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+        </div>
+
+        <!-- 구입에 포함된 서비스 -->
+        <div class="mx-4 mb-5 bg-[#1c1c1e] rounded-[14px] overflow-hidden">
+          <div class="flex items-center px-4 py-3.5 cell-active">
+            <span class="text-[17px] text-white flex-1">구입에 포함된 서비스</span>
+            <span class="bg-[#ff3b30] text-white text-[12px] font-semibold px-2 py-[2px] rounded-full mr-2">1</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+        </div>
+
+        <!-- 네트워크 및 연결 그룹 -->
+        <div class="mx-4 mb-5 bg-[#1c1c1e] rounded-[14px] overflow-hidden">
+          <!-- 에어플레이 모드 -->
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70">
+            <div class="w-7 h-7 rounded-md bg-[#ff9500] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-plane text-sm"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">에어플레인 모드</span>
+            <input type="checkbox" class="ios-switch">
+          </div>
+
+          <!-- Wi-Fi -->
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#007aff] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-wifi text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">Wi-Fi</span>
+            <span class="text-[15px] text-[#8e8e93] mr-2">SK_WiFi742D</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+
+          <!-- Bluetooth -->
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#007aff] flex items-center justify-center mr-3 text-white">
+              <i class="fa-brands fa-bluetooth-b text-sm"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">Bluetooth</span>
+            <span class="text-[15px] text-[#8e8e93] mr-2">켬</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+
+          <!-- ★ 셀룰러 (Cellular 클릭 시 화면 전환) ★ -->
+          <div id="btn-goto-cellular" class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active cursor-pointer">
+            <div class="w-7 h-7 rounded-md bg-[#34c759] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-tower-broadcast text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1 font-normal">셀룰러</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+
+          <!-- 개인용 핫스팟 -->
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#34c759] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-link text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">개인용 핫스팟</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+
+          <!-- 배터리 -->
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#34c759] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-battery-full text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">배터리</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+
+          <!-- VPN -->
+          <div class="flex items-center px-4 py-3 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#007aff] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-globe text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">VPN</span>
+            <span class="text-[15px] text-[#8e8e93] mr-2">연결되지 않음</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+        </div>
+
+        <!-- 시스템 설정 그룹 2 (이미지 2번째 스크롤 영역 재현) -->
+        <div class="mx-4 mb-8 bg-[#1c1c1e] rounded-[14px] overflow-hidden">
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#8e8e93] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-gear text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">일반</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#007aff] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-universal-access text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">손쉬운 사용</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#636366] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-magnifying-glass text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">검색</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#007aff] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-arrow-turn-down text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">동작 버튼</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#007aff] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-sun text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">디스플레이 및 밝기</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#30d158] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-atom text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">배경화면</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-black border border-[#3a3a3c] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-clock text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">스탠바이</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#636366] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-sliders text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">제어 센터</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+          <div class="flex items-center px-4 py-3 cell-active">
+            <div class="w-7 h-7 rounded-md bg-[#636366] flex items-center justify-center mr-3 text-white">
+              <i class="fa-solid fa-camera text-xs"></i>
+            </div>
+            <span class="text-[17px] text-white flex-1">카메라</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+        </div>
+
+        <!-- 하단 검색 바 (iOS 플로팅 검색 필드 재현) -->
+        <div class="sticky bottom-3 px-4 z-20 pointer-events-none">
+          <div class="bg-[#1c1c1e]/90 backdrop-blur-md rounded-full px-4 py-2.5 flex items-center space-x-2 border border-white/5 pointer-events-auto shadow-lg">
+            <i class="fa-solid fa-magnifying-glass text-[#8e8e93] text-sm"></i>
+            <span class="text-[16px] text-[#8e8e93] flex-1">검색</span>
+            <i class="fa-solid fa-microphone text-[#8e8e93] text-sm"></i>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ============================================== -->
+      <!-- SCREEN 2: 셀룰러 화면 (Cellular View)          -->
+      <!-- ============================================== -->
+      <div id="screen-cellular" class="ios-transition absolute inset-0 flex flex-col bg-black overflow-y-auto no-scrollbar pb-16 z-20 translate-x-full">
+        
+        <!-- 상단 네비게이션 헤더 -->
+        <div class="sticky top-0 bg-black/80 backdrop-blur-lg z-30 px-4 py-2.5 flex items-center justify-between border-b border-transparent">
+          <button id="btn-back-main" class="w-9 h-9 rounded-full bg-[#1c1c1e] flex items-center justify-center text-white active:bg-[#2c2c2e] transition">
+            <i class="fa-solid fa-chevron-left text-[15px]"></i>
+          </button>
+          <div class="text-[17px] font-semibold text-white tracking-tight">셀룰러</div>
+          <div class="w-9"></div> <!-- 대칭용 여백 -->
+        </div>
+
+        <!-- 안내 카드 (초록색 안테나 박스) -->
+        <div class="mx-4 mt-3 mb-5 p-5 bg-[#1c1c1e] rounded-[18px]">
+          <div class="w-14 h-14 rounded-[14px] bg-[#34c759] flex items-center justify-center text-white text-2xl mb-3.5 shadow-sm">
+            <i class="fa-solid fa-tower-broadcast"></i>
+          </div>
+          <h2 class="text-[21px] font-bold text-white tracking-tight mb-1">셀룰러</h2>
+          <p class="text-[14px] text-[#8e8e93] leading-relaxed">
+            데이터 사용량을 확인하고, 데이터 제한을 설정하며, eSIM 및 Wi-Fi 통화 등의 이동통신사 설정을 관리합니다.
+          </p>
+          <a href="#" class="text-[14px] text-[#007aff] mt-1 inline-block font-medium">더 알아보기...</a>
+        </div>
+
+        <!-- 셀룰러 데이터 토글 그룹 -->
+        <div class="mx-4 mb-2 bg-[#1c1c1e] rounded-[14px] overflow-hidden">
+          <div class="flex items-center px-4 py-3.5 border-b border-[#2c2c2e]/70">
+            <span class="text-[17px] text-white flex-1">셀룰러 데이터</span>
+            <input type="checkbox" class="ios-switch" checked>
+          </div>
+          <div class="flex items-center px-4 py-3.5 cell-active">
+            <span class="text-[17px] text-white flex-1">개인용 핫스팟</span>
+            <span class="text-[15px] text-[#8e8e93] mr-2">켬</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+        </div>
+        <p class="px-7 mb-6 text-[12px] text-[#8e8e93] leading-tight">
+          이메일, 웹 브라우징, 푸시 알림 등을 포함하여 모든 데이터를 Wi-Fi만 사용하도록 제한하려면, 셀룰러 데이터를 끄십시오.
+        </p>
+
+        <!-- SIMs 섹션 헤더 -->
+        <div class="px-5 mb-2 text-[13px] font-medium text-[#8e8e93]">SIMs</div>
+
+        <!-- SIMs 카드 그룹 -->
+        <div class="mx-4 mb-6 bg-[#1c1c1e] rounded-[14px] overflow-hidden">
+          <!-- ★ 메인 회선 및 전화번호 (클릭/탭하여 실시간 수정 가능) ★ -->
+          <div class="px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="flex items-center justify-between mb-0.5">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-[10px] font-semibold bg-[#3a3a3c] text-[#d1d1d6] px-1 py-0.5 rounded">메인</span>
+                <span class="text-[17px] text-white font-medium">메인</span>
+              </div>
+              <div class="flex items-center text-[#8e8e93] text-[15px] space-x-2">
+                <span>켬</span>
+                <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+              </div>
+            </div>
+            <!-- 티 안 나게 수정 가능한 전화번호 필드 -->
+            <div 
+              id="main-phone-number" 
+              class="editable-text text-[15px] text-[#8e8e93] tracking-wide mt-0.5 focus:text-white focus:px-1" 
+              contenteditable="true" 
+              spellcheck="false"
+              title="클릭하여 즉시 전화번호 변경"
+            >+82 10-8790-1938</div>
+          </div>
+
+          <!-- 서브 SIM 항목 1: 여행 - CMLink -->
+          <div class="px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-[17px] text-white font-normal">‘여행 - CMLink’(으)로 사용함</div>
+                <div class="text-[14px] text-[#8e8e93] mt-0.5">전화번호 없음</div>
+              </div>
+              <span class="text-[15px] text-[#8e8e93]">SIM 없음</span>
+            </div>
+          </div>
+
+          <!-- 서브 SIM 항목 2: 여행용 -->
+          <div class="px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-[17px] text-white font-normal">‘여행용’(으)로 사용함</div>
+                <div class="text-[14px] text-[#8e8e93] mt-0.5">+81 80 0000 0001</div>
+              </div>
+              <span class="text-[15px] text-[#8e8e93]">SIM 없음</span>
+            </div>
+          </div>
+
+          <!-- 서브 SIM 항목 3: 셀룰러 데이터 -->
+          <div class="px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-[17px] text-white font-normal">‘셀룰러 데이터’(으)로 사용함</div>
+                <div class="text-[14px] text-[#8e8e93] mt-0.5">전화번호 없음</div>
+              </div>
+              <span class="text-[15px] text-[#8e8e93]">SIM 없음</span>
+            </div>
+          </div>
+
+          <!-- 서브 SIM 항목 4: 여행 - CMHK -->
+          <div class="px-4 py-3 border-b border-[#2c2c2e]/70 cell-active">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-[17px] text-white font-normal">‘여행 - CMHK’(으)로 사용함</div>
+                <div class="text-[14px] text-[#8e8e93] mt-0.5">전화번호 없음</div>
+              </div>
+              <span class="text-[15px] text-[#8e8e93]">SIM 없음</span>
+            </div>
+          </div>
+
+          <!-- eSIM 추가 -->
+          <div class="px-4 py-3.5 cell-active cursor-pointer">
+            <span class="text-[17px] text-[#007aff]">eSIM 추가</span>
+          </div>
+        </div>
+
+        <!-- 하단 앱별 셀룰러 데이터 사용량 (스크린샷 4번 기준 재현) -->
+        <div class="px-5 mb-2 text-[13px] font-medium text-[#8e8e93]">셀룰러 데이터</div>
+        <div class="mx-4 mb-10 bg-[#1c1c1e] rounded-[14px] overflow-hidden">
+          <!-- X -->
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70">
+            <div class="w-7 h-7 rounded-md bg-black border border-white/20 flex items-center justify-center mr-3 text-white text-xs font-black">
+              𝕏
+            </div>
+            <div class="flex-1">
+              <div class="text-[17px] text-white leading-tight">X</div>
+              <div class="text-[13px] text-[#8e8e93]">14.8GB</div>
+            </div>
+            <input type="checkbox" class="ios-switch" checked>
+          </div>
+
+          <!-- 음악 -->
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70">
+            <div class="w-7 h-7 rounded-md bg-[#fa233b] flex items-center justify-center mr-3 text-white text-xs">
+              <i class="fa-solid fa-music"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-[17px] text-white leading-tight">음악</div>
+              <div class="text-[13px] text-[#8e8e93]">1.52GB</div>
+            </div>
+            <input type="checkbox" class="ios-switch" checked>
+          </div>
+
+          <!-- Instagram -->
+          <div class="flex items-center px-4 py-3 border-b border-[#2c2c2e]/70">
+            <div class="w-7 h-7 rounded-md bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center mr-3 text-white text-xs">
+              <i class="fa-brands fa-instagram"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-[17px] text-white leading-tight">Instagram</div>
+              <div class="text-[13px] text-[#8e8e93]">717MB</div>
+            </div>
+            <input type="checkbox" class="ios-switch" checked>
+          </div>
+
+          <!-- 개인용 핫스팟 -->
+          <div class="flex items-center px-4 py-3">
+            <div class="w-7 h-7 rounded-md bg-[#34c759] flex items-center justify-center mr-3 text-white text-xs">
+              <i class="fa-solid fa-link"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-[17px] text-white leading-tight">개인용 핫스팟</div>
+            </div>
+            <span class="text-[15px] text-[#8e8e93] mr-2">616MB</span>
+            <i class="fa-solid fa-chevron-right text-[#48484a] text-xs"></i>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 하단 홈 인디케이터 (Home Bar) -->
+    <div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-36 h-1 bg-white/40 rounded-full z-40 pointer-events-none"></div>
+
+    <!-- 간편 설정 모달 토글 버튼 (화면 우측 하단 미니 플로팅) -->
+    <button 
+      id="btn-open-settings" 
+      class="absolute right-4 bottom-5 z-50 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/60 hover:text-white transition shadow-lg"
+      title="이름 / 전화번호 일괄 변경 모달"
+    >
+      <i class="fa-solid fa-pen-to-square text-xs"></i>
+    </button>
+
+    <!-- 간편 퀵 에디트 모달 팝업 -->
+    <div id="quick-edit-modal" class="hidden absolute inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6">
+      <div class="w-full max-w-[310px] bg-[#242426] rounded-2xl p-5 border border-white/10 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-[16px] font-bold text-white tracking-tight">정보 수정</h3>
+          <button id="btn-close-modal" class="text-white/50 hover:text-white text-sm">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3.5 mb-5">
+          <div>
+            <label class="block text-[11px] font-medium text-[#8e8e93] mb-1">첫번째 화면: 이름</label>
+            <input 
+              id="input-name-modal" 
+              type="text" 
+              class="w-full bg-[#1c1c1e] text-white text-[15px] px-3 py-2 rounded-lg border border-[#3a3a3c] focus:outline-none focus:border-[#007aff]"
+              value="이송은"
+            >
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-[#8e8e93] mb-1">두번째 화면: 메인 번호</label>
+            <input 
+              id="input-phone-modal" 
+              type="text" 
+              class="w-full bg-[#1c1c1e] text-white text-[15px] px-3 py-2 rounded-lg border border-[#3a3a3c] focus:outline-none focus:border-[#007aff]"
+              value="+82 10-8790-1938"
+            >
+          </div>
+          <div class="text-[11px] text-[#8e8e93] leading-relaxed">
+            💡 화면 속의 텍스트(이름, 번호)를 직접 눌러서 바로 타이핑해 수정할 수도 있습니다.
+          </div>
+        </div>
+
+        <button 
+          id="btn-save-modal" 
+          class="w-full bg-[#007aff] active:bg-[#0062cc] text-white font-medium text-[15px] py-2.5 rounded-xl transition shadow"
+        >
+          적용하기
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // DOM 요소 캐싱
+    const screenMain = document.getElementById('screen-main');
+    const screenCellular = document.getElementById('screen-cellular');
+    const btnGotoCellular = document.getElementById('btn-goto-cellular');
+    const btnBackMain = document.getElementById('btn-back-main');
+
+    const profileNameEl = document.getElementById('profile-name');
+    const mainPhoneNumberEl = document.getElementById('main-phone-number');
+
+    const modal = document.getElementById('quick-edit-modal');
+    const btnOpenSettings = document.getElementById('btn-open-settings');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const btnSaveModal = document.getElementById('btn-save-modal');
+    const inputNameModal = document.getElementById('input-name-modal');
+    const inputPhoneModal = document.getElementById('input-phone-modal');
+
+    // 현재 화면 상태 ('main' | 'cellular')
+    let currentScreen = 'main';
+
+    // 1. 화면 전환 (메인 -> 셀룰러)
+    function goToCellular() {
+      currentScreen = 'cellular';
+      // 메인 화면은 살짝 왼쪽으로 밀리면서 어두워지는 iOS 네이티브 패럴랙스 효과
+      screenMain.style.transform = 'translateX(-30%)';
+      screenMain.style.opacity = '0.5';
+
+      // 셀룰러 화면이 오른쪽에서 들어옴
+      screenCellular.style.transform = 'translateX(0)';
+      screenCellular.scrollTop = 0;
+    }
+
+    // 2. 화면 전환 (셀룰러 -> 메인 뒤로가기)
+    function goToMain() {
+      currentScreen = 'main';
+      screenMain.style.transform = 'translateX(0)';
+      screenMain.style.opacity = '1';
+
+      screenCellular.style.transform = 'translateX(100%)';
+    }
+
+    btnGotoCellular.addEventListener('click', goToCellular);
+    btnBackMain.addEventListener('click', goToMain);
+
+    // 3. iOS 특유의 스와이프 제스처 (왼쪽 가장자리에서 오른쪽으로 밀어 뒤로가기)
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    screenCellular.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    screenCellular.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+
+      // 왼쪽 엣지(80px 이내)에서 오른쪽으로 60px 이상 스와이프 시 뒤로가기 동작
+      if (touchStartX <= 80 && diffX > 60 && Math.abs(diffY) < 100) {
+        goToMain();
+      }
+    }, { passive: true });
+
+    // 4. 인라인 수정 내용 양방향 동기화
+    profileNameEl.addEventListener('input', () => {
+      inputNameModal.value = profileNameEl.innerText.trim();
+    });
+
+    mainPhoneNumberEl.addEventListener('input', () => {
+      inputPhoneModal.value = mainPhoneNumberEl.innerText.trim();
+    });
+
+    // 엔터키 입력 시 자연스럽게 포커스 아웃 (줄바꿈 방지)
+    [profileNameEl, mainPhoneNumberEl].forEach((el) => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          el.blur();
+        }
+      });
+    });
+
+    // 5. 퀵 에디트 모달 제어
+    btnOpenSettings.addEventListener('click', () => {
+      inputNameModal.value = profileNameEl.innerText.trim();
+      inputPhoneModal.value = mainPhoneNumberEl.innerText.trim();
+      modal.classList.remove('hidden');
+    });
+
+    btnCloseModal.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    btnSaveModal.addEventListener('click', () => {
+      if (inputNameModal.value.trim()) {
+        profileNameEl.innerText = inputNameModal.value.trim();
+      }
+      if (inputPhoneModal.value.trim()) {
+        mainPhoneNumberEl.innerText = inputPhoneModal.value.trim();
+      }
+      modal.classList.add('hidden');
+    });
+
+    // 6. 상태바 시계 실시간 업데이트 (선택 사항)
+    function updateClock() {
+      const clockEl = document.getElementById('status-clock');
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      clockEl.innerText = `${hours}:${minutes}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>
